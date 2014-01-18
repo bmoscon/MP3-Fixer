@@ -44,7 +44,7 @@ import shutil
 import os
 
 class Tag(object):
-    def __init__(self, title, artist, album, year, comment, track, genre):
+    def __init__(self, title="", artist="", album="", year="", comment="", track=0, genre=255):
         self.title = title
         self.artist = artist
         self.album = album
@@ -227,18 +227,24 @@ class ID3(object):
     ]
 
     def __init__(self, file_name):
+        self.modified = False
+        self.tagless = False
+
         self.file_name = file_name
         self.tag_type = self.__classify()
         self.fields = self.__populate()
-        self.modified = False
-        
+
           
     def __classify(self):
         with open(self.file_name, "rb") as fp:
-            # Check for ID3V1 
-            fp.seek(-128, 2)
-            # Header size is 3 bytes
-            header = fp.read(3)
+            try:
+                # Check for ID3V1 
+                fp.seek(-128, 2)
+                # Header size is 3 bytes
+                header = fp.read(3)
+            except:
+                print("Error opening/reading file ", self.file_name)
+                exit(1)
 
             try:    
                 header = header.decode('UTF-8')
@@ -251,7 +257,7 @@ class ID3(object):
             else:
                 # Check for ID3v2
                 fp.seek(0, 0)
-                header = fp.read(10)
+                header = fp.read(3)
                 try:
                     header = header.decode('UTF-8', 'ignore')
                 except:
@@ -272,6 +278,13 @@ class ID3(object):
                 args = tuple((lambda s: s.decode('UTF-8', 'ignore').replace("\x00", ""))(s) for s in struct.unpack(v1_fmt, line))
                 args += struct.unpack("BB", fp.read(2))
                 fields = Tag(*args)
+        
+        elif self.tag_type is None:
+            self.modified = True
+            self.tagless = True
+            self.tag_type = self.TAG_ID3v1
+            fields = Tag()
+
         return fields
 
 
@@ -298,10 +311,13 @@ class ID3(object):
             os.remove(self.file_name)
             self.file_name = file_name
             
-
-        with open(self.file_name, mode='r+b') as fp:
-            fp.seek(-128, 2)
-            fp.write(id3_tag)
+        if self.tagless:
+            with open(self.file_name, mode='ab') as fp:
+                fp.write(id3_tag)
+        else:
+            with open(self.file_name, mode='r+b') as fp:
+                fp.seek(-128, 2)
+                fp.write(id3_tag)
 
 
     def track(self):
@@ -357,7 +373,7 @@ class ID3(object):
             print("Album:   ", self.fields.album)
             print("Track:   ", self.fields.track)
             print("Year:    ", self.fields.year)
-            print("Genre:   ", self.GENRES[self.fields.genre])
+            #print("Genre:   ", self.GENRES[self.fields.genre])
             print("Comment: ", self.fields.comment)
             print()
 

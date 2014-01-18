@@ -58,13 +58,19 @@ class Fixer(object):
 
 
     def __check_track(self, track):
-        return track < 0 or track > 31
+        return track < 1 or track > 31
 
     def __check_comment(self, comment):
         return len(comment) != 0
 
     def __check_title(self, title):
         return len(title) == 0
+
+    def __check_album(self, album):
+        return len(album) == 0
+
+    def __check_artist(self, artist):
+        return len(artist) == 0
 
     def __parse_dirs(self, path):
         paths = []
@@ -79,7 +85,11 @@ class Fixer(object):
 
 
     def __fix_filename(self, tag, path, base):
-        fname = str(tag.track()) + " - " + tag.title() + ".mp3"
+        title = tag.title()
+        title = title.replace("/", "_")
+        title = title.replace("\\", "_")
+        fname = str(tag.track()) + " - " + title + ".mp3"
+        
         if fname == base:
             return None
         return os.path.join(path, fname)
@@ -104,6 +114,16 @@ class Fixer(object):
                 print("Missing song title!")
                 title = input("Enter title: ")
                 tag.set_title(title)
+
+            if self.__check_album(tag.album()):
+                print("Missing album name!")
+                album = input("Enter name: ")
+                tag.set_album(album)
+                
+            if self.__check_artist(tag.artist()):
+                print("Missing artist name!")
+                artist = input("Enter name: ")
+                tag.set_artist(artist)
 
             file_name = None
             if fname_fix:
