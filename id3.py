@@ -229,6 +229,7 @@ class ID3(object):
         self.file_name = file_name
         self.tag_type = self.__classify()
         self.fields = self.__populate()
+        self.modified = False
         
           
     def __classify(self):
@@ -274,6 +275,9 @@ class ID3(object):
 
 
     def write_tag(self):
+        if self.modified == False:
+            return
+
         id3_tag = self.fields.to_bytes()
         if len(id3_tag) != 128:
             print("ERROR converting ID3 tag to byte array for writing!")
@@ -288,19 +292,21 @@ class ID3(object):
 
     def set_track(self, t):
         self.fields.track = t
+        self.modified = True
 
     def comment(self):
         return self.fields.comment
 
     def set_comment(self, c):
         self.fields.comment = c
+        self.modified = True
 
     def title(self):
         return self.fields.title
 
     def set_title(self, t):
         self.fields.title = t
- 
+        self.modified = True
        
     def display(self):
         if self.tag_type == self.TAG_ID3v1:

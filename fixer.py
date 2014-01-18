@@ -51,31 +51,42 @@ class Fixer(object):
         self._files = [join(d, f) for f in listdir(d) if isfile(join(d, f))]
         self._tags = {f:ID3(f) for f in self._files}
 
-    
-    def list_tags(self):
-        for file_name, tag in self._tags.items():
-            print(file_name)
-            tag.display()
 
+    def __check_track(self, track):
+        return track < 0 or track > 31
 
+    def __check_comment(self, comment):
+        return len(comment) == 0
+
+    def __check_title(self, title):
+        return len(title) == 0
+            
+        
     def fix_files(self):
         for file_name, tag in self._tags.items():
             print("Checking file ", file_name)
             tag.display()
-            if tag.track() < 1 or tag.track() > 31:
+            if self.__check_track(tag.track()):
                 print("Incorrect track!")
                 track = input("Enter track number: ")
                 tag.set_track(track)
-                tag.display()
-                tag.set_comment("")
-                tag.write_tag()
             
-            if len(tag.title()) == 0:
+            if self.__check_comment(tag.comment()):
+                tag.set_comment("")
+            
+            if self.__check_title(tag.title()):
                 print("Missing song title!")
                 title = input("Enter title: ")
                 tag.set_title(title)
-                tag.set_comment("")
-                tag.write_tag()
+
+            tag.write_tag()
+
+
+
+    def list_tags(self):
+        for file_name, tag in self._tags.items():
+            print(file_name)
+            tag.display()
 
 
 
