@@ -40,15 +40,19 @@ Copyright (C) 2013-2014  Bryant Moscon - bmoscon@gmail.com
 '''
 
 from id3              import ID3
-from os               import listdir
-from os.path          import isfile, join
+import os
 import argparse
 
 
 class Fixer(object):
     # takes in a directory to operate on
     def __init__(self, d):
-        self._files = [join(d, f) for f in listdir(d) if isfile(join(d, f))]
+        self._files = []
+        for dirpath, dirnames, filenames in os.walk(d):
+            for filename in filenames:
+                if filename.endswith(".mp3"):
+                    self._files.append(os.path.join(dirpath, filename))
+
         self._tags = {f:ID3(f) for f in self._files}
 
 
@@ -56,16 +60,37 @@ class Fixer(object):
         return track < 0 or track > 31
 
     def __check_comment(self, comment):
-        return len(comment) == 0
+        return len(comment) != 0
 
     def __check_title(self, title):
         return len(title) == 0
-            
+
+    def __parse_dirs(self, path):
+        paths = []
+        
+        head, tail = os.path.split(path)
+        while head:
+            paths.append(tail)
+            head, tail = os.path.split(head)
+        paths.append(tail)
+        
+        return paths
+
+
+    def __fix_filename(self, tag, path, base):
+        fname = str(tag.track()) + " - " + tag.title() + ".mp3"
+        if fname == base:
+            return None
+        return os.path.join(path, fname)
         
     def fix_files(self):
         for file_name, tag in self._tags.items():
             print("Checking file ", file_name)
+            path, base = os.path.split(file_name)
+            paths = self.__parse_dirs(path)
+
             tag.display()
+
             if self.__check_track(tag.track()):
                 print("Incorrect track!")
                 track = input("Enter track number: ")
@@ -79,14 +104,11 @@ class Fixer(object):
                 title = input("Enter title: ")
                 tag.set_title(title)
 
-            tag.write_tag()
-
-
-
-    def list_tags(self):
-        for file_name, tag in self._tags.items():
-            print(file_name)
-            tag.display()
+            # once all tags are updated the file name can be
+            # fixed and made to fit one naming convention
+            file_name = self.__fix_filename(tag, path, base)
+            
+            tag.write_tag(file_name=file_name)
 
 
 

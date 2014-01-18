@@ -40,7 +40,8 @@ Copyright (C) 2013-2014  Bryant Moscon - bmoscon@gmail.com
 
 
 import struct
-
+import shutil
+import os
 
 class Tag(object):
     def __init__(self, title, artist, album, year, comment, track, genre):
@@ -274,14 +275,30 @@ class ID3(object):
         return fields
 
 
-    def write_tag(self):
-        if self.modified == False:
+    def write_tag(self, file_name=None, backup=True):
+        # if we havent changed the fields in the tag
+        # and we havent updated the file name, then there
+        # isnt anything to do
+        if self.modified == False and file_name is None:
             return
 
         id3_tag = self.fields.to_bytes()
+        
         if len(id3_tag) != 128:
             print("ERROR converting ID3 tag to byte array for writing!")
             return
+            
+        # make a backup before writing the file, just in case!
+        if backup:
+            shutil.copy2(self.file_name, self.file_name+'.bak')
+
+        # in case we've updated the file name
+        if file_name:
+            shutil.copy2(self.file_name, file_name)
+            os.remove(self.file_name)
+            self.file_name = file_name
+            
+
         with open(self.file_name, mode='r+b') as fp:
             fp.seek(-128, 2)
             fp.write(id3_tag)
