@@ -324,7 +324,32 @@ class ID3(object):
     def set_title(self, t):
         self.fields.title = t
         self.modified = True
-       
+
+    def album(self):
+        return self.fields.album
+
+    def set_album(self, a):
+        self.fields.album = a
+
+    def artist(self):
+        return self.fields.artist
+
+    def set_artist(self, a):
+        self.fields.artist = a
+
+    def year(self):
+        return self.fields.year
+
+    def set_year(self, y):
+        self.fields.year = y
+
+    def genre(self):
+        return self.fields.genre
+
+    def set_genre(self, g):
+        self.fields.genre = g
+
+
     def display(self):
         if self.tag_type == self.TAG_ID3v1:
             print("Title:   ", self.fields.title)

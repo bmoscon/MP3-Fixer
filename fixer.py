@@ -42,6 +42,7 @@ Copyright (C) 2013-2014  Bryant Moscon - bmoscon@gmail.com
 from id3              import ID3
 import os
 import argparse
+import sys
 
 
 class Fixer(object):
@@ -83,7 +84,7 @@ class Fixer(object):
             return None
         return os.path.join(path, fname)
         
-    def fix_files(self):
+    def fix_files(self, backup, fname_fix):
         for file_name, tag in self._tags.items():
             print("Checking file ", file_name)
             path, base = os.path.split(file_name)
@@ -104,22 +105,25 @@ class Fixer(object):
                 title = input("Enter title: ")
                 tag.set_title(title)
 
-            # once all tags are updated the file name can be
-            # fixed and made to fit one naming convention
-            file_name = self.__fix_filename(tag, path, base)
+            file_name = None
+            if fname_fix:
+                # once all tags are updated the file name can be
+                # fixed and made to fit one naming convention
+                file_name = self.__fix_filename(tag, path, base)
             
-            tag.write_tag(file_name=file_name)
+            tag.write_tag(file_name=file_name, backup=backup)
 
 
 
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='MP3 Tag Fixer')
-    parser.add_argument('--directory', metavar='directory to work in', type=str)
+    parser = argparse.ArgumentParser(description='MP3 Filename and Tag Fixer')
+    parser.add_argument('DIR', help="directory to work in", type=str)
+    parser.add_argument('--noback', help='do not backup before modifying', action='store_false')
+    parser.add_argument('--nofname', help='do not modify filename', action='store_false')
     
     args = parser.parse_args()
     
-    if args.directory:
-        fixer = Fixer(args.directory)
-        fixer.fix_files()
+    fixer = Fixer(args.DIR)
+    fixer.fix_files(args.noback, args.nofname)
